@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>STT - TTS</title>
+    <script src="http://code.responsivevoice.org/responsivevoice.js"></script>
+</head>
+
+<body>
+    <center>
+        <br>
+        <h1>Say Hi!</h1>
+        <br>
+        <ul id="message"></ul>
+    </center>
+    <script>
+        let recognizing = false;
+        let finalTranscripts = "";
+
+        responsiveVoice.setDefaultVoice("Thai Female");
+
+        if (!('webkitSpeechRecognition' in window)) {
+            upgrade();
+        } else {
+            var recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'th-TH';
+
+            recognition.onstart = function () {
+                recognizing = true;
+                console.log("onstart");
+            };
+
+            recognition.onerror = function (event) {
+                console.log("onerror", event);
+            };
+
+            recognition.onend = function () {
+                recognizing = false;
+                console.log("onend", finalTranscripts);
+
+                if (!!finalTranscripts) {
+                    let messageTag = document.querySelector("#message");
+                    messageTag.innerHTML += `<li>${finalTranscripts}</li>`;
+                    speakThaiFemale(finalTranscripts);
+                    finalTranscripts = "";
+                }
+
+                startTimeout(1000);
+            }
+
+            recognition.onresult = function (event) {
+                let interimTranscripts = "";
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    let transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscripts = transcript;
+                    } else {
+                        interimTranscripts = transcript;
+                    }
+                }
+                console.log("onresult", interimTranscripts);
+            };
+        }
+
+        function speakThaiFemale(msg) {
+            responsiveVoice.speak(msg, "Thai Female", {
+                pitch: 1.1
+            });
+        }
+
+        function start() {
+            if (recognizing) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function startTimeout(time) {
+            setTimeout(function () {
+                start();
+            }, time);
+        }
+
+        startTimeout(500);
+    </script>
+</body>
+
+</html>
